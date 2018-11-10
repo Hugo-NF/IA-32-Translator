@@ -3,6 +3,8 @@
 cmake-build-debug/**
 cmake-build-release/**
 
+# IA-32 code
+IA-32
 
 # Prerequisites
 *.d

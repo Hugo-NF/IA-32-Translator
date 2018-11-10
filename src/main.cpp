@@ -37,12 +37,15 @@ vector<int> eval_flags(int argc, const char **argv, bool& mount, bool& start){
 
 int main(int argc, const char** argv) {
     bool start = true, nasm = false;
+    //string nasm_call = "";
     vector<int> files = eval_flags(argc, argv, nasm, start);
     if(start){
         translator_version();
         devs();
         for(auto &index: files){
-            translator file_instance(argv[index]);
+            translator file_instance((string(argv[index]) + ".asm").c_str());
+            file_instance.translate();
+            file_instance.write_to_file((string(argv[index]) + ".s").c_str());
         }
     }
 

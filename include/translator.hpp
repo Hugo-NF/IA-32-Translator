@@ -6,6 +6,7 @@
 #include "defs.hpp"
 
 #include <deque>
+#include <exception>
 #include <map>
 #include <regex>
 #include <string>
@@ -22,8 +23,18 @@ private:
     deque<string> bss_section;
 
     bool proceed = true;
+    bool translated = false;
 
-    regex line_format = regex(LINE_REGEX, regex::ECMAScript);
+    regex line_format       = regex(LINE_REGEX, regex::ECMAScript);
+    regex label_std         = regex(LABEL_STD, regex::ECMAScript);
+    regex comments_format   = regex(COMMENTS, regex::ECMAScript);
+    regex tabs_format       = regex(TABS_SPACES, regex::ECMAScript);
+    regex line_bgn_format   = regex(LINE_BEGIN, regex::ECMAScript);
+    regex opr_format        = regex(OPR_REGEX, regex::ECMAScript);
+    regex label_div_format  = regex(LABEL_DIV, regex::ECMAScript);
+    regex hex_format        = regex(HEX_REGEX, regex::ECMAScript);
+
+
     map<string, string> equ_definitions;
     map<string, int> instructions = {
             {"ADD"      , 1},
@@ -77,9 +88,36 @@ private:
             {"IF"       , "PLACEHOLDER IF"      }
     };
 
+    void format_line(long index);
+    int eval_index(string& idx);
+    bool eval_operator(string& optr);
+    void eval_ADD(deque<string> fields);
+    void eval_SUB(deque<string> fields);
+    void eval_MUL(deque<string> fields);
+    void eval_DIV(deque<string> fields);
+    void eval_JMP(deque<string> fields);
+    void eval_JMPN(deque<string> fields);
+    void eval_JMPP(deque<string> fields);
+    void eval_JMPZ(deque<string> fields);
+    void eval_COPY(deque<string> fields);
+    void eval_LOAD(deque<string> fields);
+    void eval_STORE(deque<string> fields);
+    void eval_INPUT(deque<string> fields);
+    void eval_OUTPUT(deque<string> fields);
+    void eval_STOP(deque<string> fields);
+    void eval_C_INPUT(deque<string> fields);
+    void eval_C_OUTPUT(deque<string> fields);
+    void eval_S_INPUT(deque<string> fields);
+    void eval_S_OUTPUT(deque<string> fields);
+    void eval_CONST(deque<string> fields);
+    void eval_SPACE(deque<string> fields);
+    void eval_SECTION(deque<string> fields);
+    void eval_EQU(deque<string> fields);
+    void eval_IF(deque<string> fields);
+
 
 public:
-    explicit translator(const char* filename): input_file((string(filename) + ".asm").c_str(), fstream::in){
+    explicit translator(const char* filename): input_file(filename, fstream::in){
         input_text = input_file.readfile();
     }
 

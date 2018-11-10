@@ -9,7 +9,14 @@
 #define FLAG_EXE        "-o"
 #define FLAG_TRANSLATE  "-c"
 
-#define LINE_REGEX "^(?:([A-Za-z_]\\w*): )?([A-Za-z]+)(?: ([A-Za-z_]\\w*))?(?: ([+-]) )?(?: ?([-\\d]+))?(?: ,)?(?: ([A-Za-z_]\\w*))?(?: ([+-]) )?(?: ?([-\\d]+))?$"
+#define COMMENTS    "(\t|\\s)*;(.*)"
+#define TABS_SPACES "(\t|\\s)+"
+#define LINE_BEGIN  "^ "
+#define OPR_REGEX   "(?:|\t|\\s)*([,+\\-])(?:|\t|\\s)*"
+#define LABEL_DIV   "(\t|\\s)+:"
+#define HEX_REGEX   "(0x[0-9A-Fa-f]+)"
+#define LABEL_STD   "(?:([A-Za-z_]\\w*):)"
+#define LINE_REGEX  "^(?:([A-Za-z_]\\w*): )?([A-Za-z]+)(?: ([A-Za-z_]\\w*))?(?: ([+-]) )?(?: ?([-\\d]+))?(?: ,)?(?: ([A-Za-z_]\\w*))?(?: ([+-]) )?(?: ?([-\\d]+))?$"
 
 #define ADD_CODE         1
 #define SUB_CODE         2
