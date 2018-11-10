@@ -37,7 +37,8 @@ vector<int> eval_flags(int argc, const char **argv, bool& mount, bool& start){
 
 int main(int argc, const char** argv) {
     bool start = true, nasm = false;
-    //string nasm_call = "";
+    string nasm_call = "nasm -f elf -o ";
+    string ld_call = "ld -m elf_i386 ";
     vector<int> files = eval_flags(argc, argv, nasm, start);
     if(start){
         translator_version();
@@ -46,6 +47,10 @@ int main(int argc, const char** argv) {
             translator file_instance((string(argv[index]) + ".asm").c_str());
             file_instance.translate();
             file_instance.write_to_file((string(argv[index]) + ".s").c_str());
+            if(nasm){
+                system((nasm_call + string(argv[index]) + ".o " + string(argv[index]) + ".asm").c_str());
+                system((ld_call + string(argv[index]) + " " + string(argv[index]) + ".o").c_str());
+            }
         }
     }
 
