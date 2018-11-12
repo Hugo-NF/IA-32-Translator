@@ -44,14 +44,18 @@ int main(int argc, const char** argv) {
         translator_version();
         devs();
         for(auto &index: files){
+            info("Current file: %s.asm\n", argv[index]);
             translator file_instance((string(argv[index]) + ".asm").c_str());
             file_instance.translate();
-            file_instance.write_to_file((string(argv[index]) + ".s").c_str());
+            if(file_instance.write_to_file((string(argv[index]) + ".s").c_str()))
+                success("File '%s.asm' done.", argv[index]);
             if(nasm){
+                info("Calling nasm...");
                 system((nasm_call + string(argv[index]) + ".o " + string(argv[index]) + ".asm").c_str());
                 system((ld_call + string(argv[index]) + " " + string(argv[index]) + ".o").c_str());
             }
         }
+
     }
 
     return 0;

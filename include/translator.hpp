@@ -34,8 +34,6 @@ private:
     regex label_div_format  = regex(LABEL_DIV, regex::ECMAScript);
     regex hex_format        = regex(HEX_REGEX, regex::ECMAScript);
 
-
-    map<string, string> equ_definitions;
     map<string, int> instructions = {
             {"ADD"      , 1},
             {"SUB"      , 2},
@@ -104,7 +102,7 @@ private:
     void eval_STORE(deque<string> fields);
     void eval_INPUT(deque<string> fields);
     void eval_OUTPUT(deque<string> fields);
-    void eval_STOP(deque<string> fields);
+    void eval_STOP();
     void eval_C_INPUT(deque<string> fields);
     void eval_C_OUTPUT(deque<string> fields);
     void eval_S_INPUT(deque<string> fields);
@@ -118,13 +116,14 @@ private:
 
 public:
     explicit translator(const char* filename): input_file(filename, fstream::in){
-        input_text = input_file.readfile();
+        if(input_file.is_open())
+            input_text = input_file.readfile();
     }
 
     virtual ~translator() = default;
 
     void translate();
-    void write_to_file(const char *filename);
+    bool write_to_file(const char *filename);
 
 };
 

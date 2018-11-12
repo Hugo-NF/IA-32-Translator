@@ -78,8 +78,8 @@ void translator::eval_OUTPUT(deque<string> fields) {
     text_section.push_back(translations[fields[2]]);
 }
 
-void translator::eval_STOP(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+void translator::eval_STOP() {
+    text_section.emplace_back("\nmov eax, 1\nmov ebx, 0\nint 80h\n");
 }
 
 void translator::eval_C_INPUT(deque<string> fields) {
@@ -99,23 +99,39 @@ void translator::eval_S_OUTPUT(deque<string> fields) {
 }
 
 void translator::eval_CONST(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    string code = fields[1] + " dd " + fields[5];
+    data_section.push_back(code);
 }
 
 void translator::eval_SPACE(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    string code = fields[1] + " resd " + (fields[5].empty()? "1":fields[5]);
+    bss_section.push_back(code);
 }
 
 void translator::eval_SECTION(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    transform(fields[3].begin(), fields[3].end(), fields[3].begin(), ::tolower);
+    string code = "section ." + fields[3];
+    if(fields[3] == "text"){
+        text_section.push_back(code);
+        text_section.emplace_back("global _start");
+        text_section.emplace_back("_start:");
+    }
+    else if(fields[3] == "data")
+        data_section.push_front(code);
+    else if(fields[3] == "bss")
+        bss_section.push_front(code);
+    else
+        error("Unknown section .%s directive\n", fields[3].c_str());
 }
 
 void translator::eval_EQU(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    string code = fields[1] + " EQU " + fields[5];
+    data_section.push_back(code);
 }
 
 void translator::eval_IF(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    string code = "%if " + fields[3];
+    text_section.push_back(code);
 }
 
 void translator::translate() {
@@ -179,7 +195,7 @@ void translator::translate() {
                             eval_OUTPUT(inst_fields);
                             break;
                         case STOP_CODE:
-                            eval_STOP(inst_fields);
+                            eval_STOP();
                             break;
                         case C_INPUT_CODE:
                             eval_C_INPUT(inst_fields);
@@ -207,6 +223,7 @@ void translator::translate() {
                             break;
                         case IF_CODE:
                             eval_IF(inst_fields);
+                            input_text.insert(input_text.begin() + index + 2, "%endif");
                             break;
                         default:
                             error("Unknown operation mnemonic '%s' at line %d\n", inst_fields[2].c_str(), index+1);
@@ -220,25 +237,30 @@ void translator::translate() {
                 }
 
             }
-            else if(regex_search(input_text[index], matches, label_std)){
+            else if(regex_search(input_text[index], matches, label_std))
                 text_section.push_back(matches[0].str());
-            }
+            else if(input_text[index] == "%endif")
+                text_section.emplace_back("%endif");
             else {
                 error("Unknown error detected at line %d\n", index+1);
                 proceed = false;
             }
         }
     }
-    translated = true;
+    translated = !input_text.empty();
 }
 
-void translator::write_to_file(const char *filename) {
-    io_file output_file(filename, fstream::out);
+bool translator::write_to_file(const char *filename) {
+    if(proceed && translated){
+        io_file output_file(filename, fstream::out);
 
-    output_file.writelines(data_section);
-    output_file.writelines(bss_section);
-    output_file.writelines(text_section);
+        output_file.writelines(data_section);
+        output_file.writelines(bss_section);
+        output_file.writelines(text_section);
 
-    output_file.close();
+        output_file.close();
+        return true;
+    }
+    return false;
 }
 
