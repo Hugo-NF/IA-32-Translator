@@ -32,7 +32,6 @@ private:
     regex line_bgn_format   = regex(LINE_BEGIN, regex::ECMAScript);
     regex opr_format        = regex(OPR_REGEX, regex::ECMAScript);
     regex label_div_format  = regex(LABEL_DIV, regex::ECMAScript);
-    regex hex_format        = regex(HEX_REGEX, regex::ECMAScript);
 
     map<string, int> instructions = {
             {"ADD"      , 1},
@@ -87,7 +86,7 @@ private:
     };
 
     void format_line(long index);
-    int eval_index(string& idx);
+    bool eval_index(string& idx);
     bool eval_operator(string& optr);
     void eval_ADD(deque<string> fields);
     void eval_SUB(deque<string> fields);

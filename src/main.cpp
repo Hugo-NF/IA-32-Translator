@@ -48,7 +48,7 @@ int main(int argc, const char** argv) {
             translator file_instance((string(argv[index]) + ".asm").c_str());
             file_instance.translate();
             if(file_instance.write_to_file((string(argv[index]) + ".s").c_str()))
-                success("File '%s.asm' done.", argv[index]);
+                success("File '%s.asm' done.\n", argv[index]);
             if(nasm){
                 info("Calling nasm...");
                 system((nasm_call + string(argv[index]) + ".o " + string(argv[index]) + ".asm").c_str());
@@ -57,6 +57,5 @@ int main(int argc, const char** argv) {
         }
 
     }
-
     return 0;
 }

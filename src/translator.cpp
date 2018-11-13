@@ -1,37 +1,60 @@
 #include "../include/translator.hpp"
 
 void translator::format_line(long index) {
-    smatch m;
     input_text[index].assign(regex_replace(input_text[index], comments_format, ""));
     input_text[index].assign(regex_replace(input_text[index], tabs_format, " "));
     input_text[index].assign(regex_replace(input_text[index], line_bgn_format, ""));
-    input_text[index].assign(regex_replace(input_text[index], opr_format, ":"));
-    input_text[index].assign(regex_replace(input_text[index], label_div_format, " $1"));
-    if(regex_search(input_text[index], m, hex_format)){
-        int num = (int) stoul(m[0].str(), nullptr, 16);
-        input_text[index].assign(regex_replace(input_text[index], hex_format, to_string(num)));
+    input_text[index].assign(regex_replace(input_text[index], opr_format, " $1"));
+    input_text[index].assign(regex_replace(input_text[index], label_div_format, ":"));
+}
+
+bool translator::eval_index(string& idx){
+    try{
+        stoul(idx, nullptr, 0);
+        return true;
+    }
+    catch(exception &exc) {
+        return false;
     }
 }
 
-int translator::eval_index(string& idx){
-    return stoi(idx);
+bool translator::eval_operator(string& optr) {
+    return optr == "+" || optr == "-";
 }
 
-bool translator::eval_operator(string& optr){
-    if(optr == "+")
-        return true;
-    else if(optr == "-")
-        return false;
-    else
-        throw invalid_argument("unknown operator");
-}
+/**
+ * TODO
+ * MUL, DIV, INPUTS, OUTPUTS
+ * */
 
 void translator::eval_ADD(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    if(!fields[6].empty() || !fields[7].empty() || !fields[8].empty())
+        error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
+    else{
+        if(fields[4].empty()){
+            text_section.emplace_back("add eax, [" + fields[3] + "]\n");
+        } else {
+            if (eval_operator(fields[4]) && eval_index(fields[5]))
+                text_section.emplace_back("add eax, [" + fields[3] + fields[4] + fields[5] + "]\n");
+            else
+                error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
+        }
+    }
 }
 
 void translator::eval_SUB(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    if(!fields[6].empty() || !fields[7].empty() || !fields[8].empty())
+        error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
+    else{
+        if(fields[4].empty()) {
+            text_section.emplace_back("sub eax, [" + fields[3] + "]\n");
+        } else {
+            if (eval_operator(fields[4]) && eval_index(fields[5]))
+                text_section.emplace_back("sub eax, [" + fields[3] + fields[4] + fields[5] + "]\n");
+            else
+                error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
+        }
+    }
 }
 
 void translator::eval_MUL(deque<string> fields) {
@@ -43,31 +66,78 @@ void translator::eval_DIV(deque<string> fields) {
 }
 
 void translator::eval_JMP(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back("jmp " + fields[3]);
 }
 
 void translator::eval_JMPN(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back("cmp eax, 0\njs "+ fields[3] + "\n"); // jump if sign
 }
 
 void translator::eval_JMPP(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back("cmp eax, 0\njns "+ fields[3] + "\n"); // jump if not sign
 }
 
 void translator::eval_JMPZ(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back("cmp eax, 0\njz "+ fields[3] + "\n"); // jump if zero
 }
 
 void translator::eval_COPY(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    string code, src, dst;
+    bool pass = true;
+
+    if(fields[4].empty())
+        src = fields[3];
+    else{
+        if(eval_operator(fields[4]) && eval_index(fields[5]))
+            src = fields[3] + fields[4] + fields[5];
+        else
+            pass = false;
+    }
+    if(fields[7].empty())
+        dst = fields[6];
+    else{
+        if(eval_operator(fields[7]) && eval_index(fields[8]))
+            dst = fields[6] + fields[7] + fields[8];
+        else
+            pass = false;
+    }
+
+    if(pass){
+        code = "push eax\nmov eax, [" + src + "]\n" + "mov [" + dst + "], eax\npop eax\n";
+        text_section.push_back(code);
+    } else
+        error("Bad formed instruction: %s\n", fields[0].c_str());
+
 }
 
 void translator::eval_LOAD(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    if(!fields[6].empty() || !fields[7].empty() || !fields[8].empty())
+        error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
+    else{
+        if(fields[4].empty()) {
+            text_section.emplace_back("mov eax, [" + fields[3] + "]\n");
+        } else {
+            if (eval_operator(fields[4]) && eval_index(fields[5]))
+                text_section.emplace_back("mov eax, [" + fields[3] + fields[4] + fields[5] + "]\n");
+            else
+                error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
+        }
+    }
 }
 
 void translator::eval_STORE(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    if(!fields[6].empty() || !fields[7].empty() || !fields[8].empty())
+        error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
+    else{
+        if(fields[4].empty()) {
+            text_section.emplace_back("mov [" + fields[3] + "], eax\n");
+        } else {
+            if (eval_operator(fields[4]) && eval_index(fields[5]))
+                text_section.emplace_back("mov [" + fields[3] + fields[4] + fields[5] + "], eax\n");
+            else
+                error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
+        }
+    }
 }
 
 void translator::eval_INPUT(deque<string> fields) {
@@ -112,14 +182,14 @@ void translator::eval_SECTION(deque<string> fields) {
     transform(fields[3].begin(), fields[3].end(), fields[3].begin(), ::tolower);
     string code = "section ." + fields[3];
     if(fields[3] == "text"){
-        text_section.push_back(code);
+        text_section.emplace_back("\n" + code);
         text_section.emplace_back("global _start");
         text_section.emplace_back("_start:");
     }
     else if(fields[3] == "data")
         data_section.push_front(code);
     else if(fields[3] == "bss")
-        bss_section.push_front(code);
+        bss_section.emplace_front("\n" + code);
     else
         error("Unknown section .%s directive\n", fields[3].c_str());
 }
@@ -139,74 +209,109 @@ void translator::translate() {
     long stop = input_text.size();
 
     for(long index = 0; index < stop; index++){
+        format_line(index);
         if(input_text[index].empty()){
             input_text.erase(input_text.begin() + index);
             index--;
             stop = input_text.size();
         }
         else{
-            format_line(index);
             if(regex_search(input_text[index], matches, line_format)){
                 deque<string> inst_fields;
                 for(auto &match: matches) {
                     inst_fields.push_back(match.str());
                     //0: All, 1: Label, 2: Mnemonic, 3: OPERAND_1, 4: OPERATOR_1, 5: OFFSET_1, 6: OPERAND_2, 7: OPERATOR_2, 8: OFFSET_2
                 }
-
                 try{
                     switch(instructions[inst_fields[2]]){
                         case ADD_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_ADD(inst_fields);
                             break;
                         case SUB_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_SUB(inst_fields);
                             break;
                         case MUL_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_MUL(inst_fields);
                             break;
                         case DIV_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_DIV(inst_fields);
                             break;
                         case JMP_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_JMP(inst_fields);
                             break;
                         case JMPN_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_JMPN(inst_fields);
                             break;
                         case JMPP_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_JMPP(inst_fields);
                             break;
                         case JMPZ_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_JMPZ(inst_fields);
                             break;
                         case COPY_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_COPY(inst_fields);
                             break;
                         case LOAD_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_LOAD(inst_fields);
                             break;
                         case STORE_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_STORE(inst_fields);
                             break;
                         case INPUT_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_INPUT(inst_fields);
                             break;
                         case OUTPUT_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_OUTPUT(inst_fields);
                             break;
                         case STOP_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_STOP();
                             break;
                         case C_INPUT_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_C_INPUT(inst_fields);
                             break;
                         case C_OUTPUT_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_C_OUTPUT(inst_fields);
                             break;
                         case S_INPUT_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_S_INPUT(inst_fields);
                             break;
                         case S_OUTPUT_CODE:
+                            if(!inst_fields[1].empty())
+                                text_section.emplace_back(inst_fields[1] + ":");
                             eval_S_OUTPUT(inst_fields);
                             break;
                         case CONST_CODE:
@@ -235,7 +340,6 @@ void translator::translate() {
                     error("Exception '%s' reported at line %d\n", exc.what(), index+1);
                     proceed = false;
                 }
-
             }
             else if(regex_search(input_text[index], matches, label_std))
                 text_section.push_back(matches[0].str());
@@ -251,13 +355,16 @@ void translator::translate() {
 }
 
 bool translator::write_to_file(const char *filename) {
+    /*
+    io_file debug((string(filename) + "_debug.s").c_str(), fstream::out);
+    debug.writelines(input_text);
+    debug.close();
+    */
     if(proceed && translated){
         io_file output_file(filename, fstream::out);
-
         output_file.writelines(data_section);
         output_file.writelines(bss_section);
         output_file.writelines(text_section);
-
         output_file.close();
         return true;
     }
