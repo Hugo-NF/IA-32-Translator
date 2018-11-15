@@ -22,7 +22,6 @@ bool translator::eval_operator(string& optr) {
     return optr == "+" || optr == "-";
 }
 
-
 void translator::eval_ADD(deque<string> fields) {
     if(!fields[6].empty() || !fields[7].empty() || !fields[8].empty())
         error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
@@ -54,11 +53,33 @@ void translator::eval_SUB(deque<string> fields) {
 }
 
 void translator::eval_MUL(deque<string> fields) {
-    text_section.emplace_back(";MUL\nimul dword["+ fields[3] + "]\njbe sys_overflow");
+    if(!fields[6].empty() || !fields[7].empty() || !fields[8].empty())
+        error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
+    else{
+        if(fields[4].empty()) {
+            text_section.emplace_back(";MUL\nimul dword["+ fields[3] + "]\njbe sys_overflow");
+        } else {
+            if (eval_operator(fields[4]) && eval_index(fields[5]))
+                text_section.emplace_back(";MUL\nimul dword[" + fields[3] + fields[4] + "4*" + fields[5] + "]\njbe sys_overflow");
+            else
+                error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
+        }
+    }
 }
 
 void translator::eval_DIV(deque<string> fields) {
-    text_section.emplace_back(";DIV\ncdq\nidiv dword[" + fields[3] + "]");
+    if(!fields[6].empty() || !fields[7].empty() || !fields[8].empty())
+        error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
+    else{
+        if(fields[4].empty()) {
+            text_section.emplace_back(";DIV\ncdq\nidiv dword[" + fields[3] + "]");
+        } else {
+            if (eval_operator(fields[4]) && eval_index(fields[5]))
+                text_section.emplace_back(";DIV\ncdq\nidiv dword[" + fields[3] + fields[4] + "4*" + fields[5] + "]");
+            else
+                error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
+        }
+    }
 }
 
 void translator::eval_JMP(deque<string> fields) {
