@@ -1,7 +1,7 @@
 #ifndef TRADUTOR_DEFS_HPP
 #define TRADUTOR_DEFS_HPP
 
-#define TRANSLATOR_VERSION  "0.0.1"
+#define TRANSLATOR_VERSION  "0.9.5"
 
 #define FLAG_HELP       "-h"
 #define FLAG_VERSION    "-v"

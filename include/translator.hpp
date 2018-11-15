@@ -24,6 +24,7 @@ private:
 
     bool proceed = true;
     bool translated = false;
+    bool copyRoutines = false;
 
     regex line_format       = regex(LINE_REGEX, regex::ECMAScript);
     regex label_std         = regex(LABEL_STD, regex::ECMAScript);
@@ -57,32 +58,6 @@ private:
             {"SECTION"  , 23},
             {"EQU"      , 24},
             {"IF"       , 25}
-    };
-
-    map<string, string> translations = {
-            {"ADD"      , "PLACEHOLDER ADD"     },
-            {"SUB"      , "PLACEHOLDER SUB"     },
-            {"MUL"      , "PLACEHOLDER MUL"     },
-            {"DIV"      , "PLACEHOLDER DIV"     },
-            {"JMP"      , "PLACEHOLDER JMP"     },
-            {"JMPN"     , "PLACEHOLDER JMPN"    },
-            {"JMPP"     , "PLACEHOLDER JMPP"    },
-            {"JMPZ"     , "PLACEHOLDER JMPZ"    },
-            {"COPY"     , "PLACEHOLDER COPY"    },
-            {"LOAD"     , "PLACEHOLDER LOAD"    },
-            {"STORE"    , "PLACEHOLDER STORE"   },
-            {"INPUT"    , "PLACEHOLDER INPUT"   },
-            {"OUTPUT"   , "PLACEHOLDER OUTPUT"  },
-            {"C_INPUT"  , "PLACEHOLDER C_INPUT" },
-            {"C_OUTPUT" , "PLACEHOLDER C_OUTPUT"},
-            {"S_INPUT"  , "PLACEHOLDER S_INPUT" },
-            {"S_OUTPUT" , "PLACEHOLDER S_OUTPUT"},
-            {"STOP"     , "PLACEHOLDER STOP"    },
-            {"CONST"    , "PLACEHOLDER CONST"   },
-            {"SPACE"    , "PLACEHOLDER SPACE"   },
-            {"SECTION"  , "PLACEHOLDER SECTION" },
-            {"EQU"      , "PLACEHOLDER EQU"     },
-            {"IF"       , "PLACEHOLDER IF"      }
     };
 
     void format_line(long index);

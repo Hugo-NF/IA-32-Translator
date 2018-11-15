@@ -22,20 +22,16 @@ bool translator::eval_operator(string& optr) {
     return optr == "+" || optr == "-";
 }
 
-/**
- * TODO
- * MUL, DIV, INPUTS, OUTPUTS
- * */
 
 void translator::eval_ADD(deque<string> fields) {
     if(!fields[6].empty() || !fields[7].empty() || !fields[8].empty())
         error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
     else{
         if(fields[4].empty()){
-            text_section.emplace_back("add eax, [" + fields[3] + "]\n");
+            text_section.emplace_back(";ADD\nadd eax, dword[" + fields[3] + "]");
         } else {
             if (eval_operator(fields[4]) && eval_index(fields[5]))
-                text_section.emplace_back("add eax, [" + fields[3] + fields[4] + fields[5] + "]\n");
+                text_section.emplace_back(";ADD\nadd eax, dword[" + fields[3] + fields[4] + "4*" + fields[5] + "]");
             else
                 error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
         }
@@ -47,10 +43,10 @@ void translator::eval_SUB(deque<string> fields) {
         error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
     else{
         if(fields[4].empty()) {
-            text_section.emplace_back("sub eax, [" + fields[3] + "]\n");
+            text_section.emplace_back(";SUB\nsub eax, dword[" + fields[3] + "]");
         } else {
             if (eval_operator(fields[4]) && eval_index(fields[5]))
-                text_section.emplace_back("sub eax, [" + fields[3] + fields[4] + fields[5] + "]\n");
+                text_section.emplace_back(";SUB\nsub eax, dword[" + fields[3] + fields[4] + "4*" + fields[5] + "]");
             else
                 error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
         }
@@ -58,27 +54,27 @@ void translator::eval_SUB(deque<string> fields) {
 }
 
 void translator::eval_MUL(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back(";MUL\nimul dword["+ fields[3] + "]\njbe sys_overflow");
 }
 
 void translator::eval_DIV(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back(";DIV\ncdq\nidiv dword[" + fields[3] + "]");
 }
 
 void translator::eval_JMP(deque<string> fields) {
-    text_section.emplace_back("jmp " + fields[3]);
+    text_section.emplace_back(";JMP\njmp " + fields[3]);
 }
 
 void translator::eval_JMPN(deque<string> fields) {
-    text_section.emplace_back("cmp eax, 0\njs "+ fields[3] + "\n"); // jump if sign
+    text_section.emplace_back(";JMPN\ncmp eax, 0\njl "+ fields[3]); // jump if sign
 }
 
 void translator::eval_JMPP(deque<string> fields) {
-    text_section.emplace_back("cmp eax, 0\njns "+ fields[3] + "\n"); // jump if not sign
+    text_section.emplace_back(";JMPP\ncmp eax, 0\njg "+ fields[3]); // jump if not sign
 }
 
 void translator::eval_JMPZ(deque<string> fields) {
-    text_section.emplace_back("cmp eax, 0\njz "+ fields[3] + "\n"); // jump if zero
+    text_section.emplace_back(";JMPZ\ncmp eax, 0\nje "+ fields[3]); // jump if zero
 }
 
 void translator::eval_COPY(deque<string> fields) {
@@ -89,7 +85,7 @@ void translator::eval_COPY(deque<string> fields) {
         src = fields[3];
     else{
         if(eval_operator(fields[4]) && eval_index(fields[5]))
-            src = fields[3] + fields[4] + fields[5];
+            src = fields[3] + fields[4] + "4*" + fields[5];
         else
             pass = false;
     }
@@ -97,13 +93,13 @@ void translator::eval_COPY(deque<string> fields) {
         dst = fields[6];
     else{
         if(eval_operator(fields[7]) && eval_index(fields[8]))
-            dst = fields[6] + fields[7] + fields[8];
+            dst = fields[6] + fields[7] + "4*" + fields[8];
         else
             pass = false;
     }
 
     if(pass){
-        code = "push eax\nmov eax, [" + src + "]\n" + "mov [" + dst + "], eax\npop eax\n";
+        code = ";COPY\npush eax\nmov eax, dword[" + src + "]\nmov dword[" + dst + "], eax\npop eax";
         text_section.push_back(code);
     } else
         error("Bad formed instruction: %s\n", fields[0].c_str());
@@ -115,10 +111,10 @@ void translator::eval_LOAD(deque<string> fields) {
         error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
     else{
         if(fields[4].empty()) {
-            text_section.emplace_back("mov eax, [" + fields[3] + "]\n");
+            text_section.emplace_back(";LOAD\nmov eax, dword[" + fields[3] + "]");
         } else {
             if (eval_operator(fields[4]) && eval_index(fields[5]))
-                text_section.emplace_back("mov eax, [" + fields[3] + fields[4] + fields[5] + "]\n");
+                text_section.emplace_back(";LOAD\nmov eax, dword[" + fields[3] + fields[4] + "4*" + fields[5] + "]");
             else
                 error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
         }
@@ -130,10 +126,10 @@ void translator::eval_STORE(deque<string> fields) {
         error("Invalid number of arguments to instruction '%s'\n", fields[0].c_str());
     else{
         if(fields[4].empty()) {
-            text_section.emplace_back("mov [" + fields[3] + "], eax\n");
+            text_section.emplace_back(";STORE\nmov dword[" + fields[3] + "], eax");
         } else {
             if (eval_operator(fields[4]) && eval_index(fields[5]))
-                text_section.emplace_back("mov [" + fields[3] + fields[4] + fields[5] + "], eax\n");
+                text_section.emplace_back(";STORE\nmov dword[" + fields[3] + fields[4] + "4*" + fields[5] + "], eax");
             else
                 error("Invalid operation '%s %s' in instruction '%s'\n", fields[4].c_str(), fields[5].c_str(), fields[0].c_str());
         }
@@ -141,31 +137,37 @@ void translator::eval_STORE(deque<string> fields) {
 }
 
 void translator::eval_INPUT(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back(";INPUT\npush " + fields[3] + "\ncall ReadInteger\nadd esp, 4");
+    copyRoutines = true;
 }
 
 void translator::eval_OUTPUT(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back(";OUTPUT\npush dword[" + fields[3] + "]\ncall PrintInteger\nadd esp, 4");
+    copyRoutines = true;
 }
 
 void translator::eval_STOP() {
-    text_section.emplace_back("\nmov eax, 1\nmov ebx, 0\nint 80h\n");
+    text_section.emplace_back(";STOP\nsys_exit:\nmov eax, 1\nmov ebx, 0\nint 80h\n");
 }
 
 void translator::eval_C_INPUT(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back(";C_INPUT\npush " + fields[3] + "\ncall ReadChar\nadd esp, 4");
+    copyRoutines = true;
 }
 
 void translator::eval_C_OUTPUT(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back(";C_OUTPUT\npush " + fields[3] + "\ncall PrintChar\nadd esp, 4");
+    copyRoutines = true;
 }
 
 void translator::eval_S_INPUT(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back(";S_INPUT\npush " + fields[3] + "\ncall ReadString\nadd esp, 4");
+    copyRoutines = true;
 }
 
 void translator::eval_S_OUTPUT(deque<string> fields) {
-    text_section.push_back(translations[fields[2]]);
+    text_section.emplace_back(";S_OUTPUT\npush " + fields[3] + "\ncall PrintString\nadd esp, 4");
+    copyRoutines = true;
 }
 
 void translator::eval_CONST(deque<string> fields) {
@@ -186,8 +188,13 @@ void translator::eval_SECTION(deque<string> fields) {
         text_section.emplace_back("global _start");
         text_section.emplace_back("_start:");
     }
-    else if(fields[3] == "data")
+    else if(fields[3] == "data"){
+        data_section.emplace_front("nwl dd 0xd, 0xa");
+        data_section.emplace_front("ovfl_msg dd 'O','v','e','r','f','l','o','w',' ',"
+                                   " 'd', 'e','t','e','c','t','e','d','.',' ','E','x',"
+                                   "'i','t','i','n','g','.','.','.',0");
         data_section.push_front(code);
+    }
     else if(fields[3] == "bss")
         bss_section.emplace_front("\n" + code);
     else
@@ -365,7 +372,21 @@ bool translator::write_to_file(const char *filename) {
         output_file.writelines(data_section);
         output_file.writelines(bss_section);
         output_file.writelines(text_section);
+        deque<string> functions;
+
+        if(copyRoutines){
+            io_file io_functions("../IA-32/io.asm", fstream::in);
+            if(io_functions.is_open()){
+                functions = io_functions.readfile();
+                output_file.writelines(functions);
+            }
+            else
+                error("Missing I/O functions definitions. No such file or directory: ../IA-32/io.asm");
+        }
+
         output_file.close();
+
+
         return true;
     }
     return false;
