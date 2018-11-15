@@ -50,15 +50,14 @@ using namespace std;
 
 namespace console{
     inline static void help(){
-        printf("Uso:\n"
-               "Em sistemas Unix:\t./tradutor myfile1.asm ... myfileN.asm\n"
-               "Em sistemas Windows:\ttradutor myfile.asm ... myfileN.asm\n\n"
-               "Flags disponiveis:\n"
-               "-h\t= ver ajuda\n"
-               "-o\t= gerar executavel, aka: chamar o NASM\n"
-               "-c\t= apenas traduzir (default)\n"
-               "-v\t= mostrar versao\n"
-               "-d\t= mostrar desenvolvedores\n\n");
+        printf("Usage:\t"
+               "./tradutor myfile1 ... myfileN\n'.asm' file extension is assumed\n\n"
+               "Flags available:\n"
+               "-h\t= help menu\n"
+               "-o\t= translate and create executable file, aka: nasm e ld\n"
+               "-c\t= only translate (default)\n"
+               "-v\t= show version\n"
+               "-d\t= show developers\n\n");
     }
 
     inline static void translator_version(){

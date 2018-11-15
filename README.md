@@ -1,37 +1,39 @@
-## Welcome to GitHub Pages
+## Imaginary ASM to IA-32(x86 Intel Assembly)
 
-You can use the [editor on GitHub](https://github.com/Hugo-NF/IA-32-Translator/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+This project is the second assignment of Basic Software discipline (2018/2) at University of Brasília.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### 1. Students
+|Name (Git User)|ID|
+|--|--|
+|Hugo Nascimento Fonseca (@Hugo-NF)|16/0008166|
+|José Luiz Gomes Nogueira (@01oseluiz)|16/0032458|
+ 
+### 2. Tools and environment
+- Language: C++ 17
+- OS: Ubuntu 18.04 (g++ 7.3.0) 
+- CMake: 3.10 ou higher
+- Valgrind: 3.13.0
 
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
+### 3. Compilation
 ```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+cmake CMakeLists.txt
+make
 ```
+### 4. Usage and options available
+```
+./tradutor (optional flags) myfile1 myfile2 ... myfileN
+```
+* Available flags
+    - -h	= help menu
+    - -o	= translate and create executable file, aka: _nasm_ e _ld_
+    - -c	= only translate **(default)**
+    - -v	= show version
+    - -d	= show developers
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+* The following file extensions are assumed
+    * Imaginary ASM source code:        .asm
+    * x86 Intel Assembly source code:   .s
 
-### Jekyll Themes
+* Some source code examples provided by discipline professor and project specification are available in /docs directory  
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Hugo-NF/IA-32-Translator/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+See at [GitHub repo](https://github.com/Hugo-NF/IA-32-Translator)

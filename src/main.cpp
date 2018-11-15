@@ -53,7 +53,7 @@ int main(int argc, const char** argv) {
                 success("File '%s.asm' done.\n", argv[index]);
 
             if(nasm){
-                info("Calling nasm...\n");
+                info("Generating executable...\n");
                 int nasm_rc = system((nasm_call + string(argv[index]) + ".o " + string(argv[index]) + ".s").c_str());
                 int ld_rc = system((ld_call + string(argv[index]) + " " + string(argv[index]) + ".o").c_str());
                 if(nasm_rc)
