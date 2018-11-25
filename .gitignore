@@ -5,7 +5,6 @@ cmake-build-release/**
 
 # IA-32 code
 IA-32/funct.asm
-IA-32/macros.asm
 IA-32/macros
 IA-32/testes.asm
 
