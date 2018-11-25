@@ -398,13 +398,15 @@ bool translator::write_to_file(const char *filename) {
         deque<string> functions;
 
         if(copyRoutines){
-            io_file io_functions("../IA-32/io.asm", fstream::in);
+            io_file io_functions("IA-32/io.asm", fstream::in);
             if(io_functions.is_open()){
                 functions = io_functions.readfile();
                 output_file.writelines(functions);
             }
-            else
-                error("Missing I/O functions definitions. No such file or directory: ../IA-32/io.asm");
+            else {
+                error("Missing file with I/O functions definitions. No such file or directory: IA-32/io.asm\n");
+                return false;
+            }
         }
 
         output_file.close();
