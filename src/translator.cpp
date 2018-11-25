@@ -158,12 +158,12 @@ void translator::eval_STORE(deque<string> fields) {
 }
 
 void translator::eval_INPUT(deque<string> fields) {
-    text_section.emplace_back(";INPUT\npush " + fields[3] + "\ncall ReadInteger\nadd esp, 4");
+    text_section.emplace_back(";INPUT\npush eax\npush " + fields[3] + "\ncall ReadInteger\nadd esp, 4\npop eax");
     copyRoutines = true;
 }
 
 void translator::eval_OUTPUT(deque<string> fields) {
-    text_section.emplace_back(";OUTPUT\npush dword[" + fields[3] + "]\ncall PrintInteger\nadd esp, 4");
+    text_section.emplace_back(";OUTPUT\npush eax\npush dword[" + fields[3] + "]\ncall PrintInteger\nadd esp, 4\npop eax");
     copyRoutines = true;
 }
 
@@ -172,22 +172,22 @@ void translator::eval_STOP() {
 }
 
 void translator::eval_C_INPUT(deque<string> fields) {
-    text_section.emplace_back(";C_INPUT\npush " + fields[3] + "\ncall ReadChar\nadd esp, 4");
+    text_section.emplace_back(";C_INPUT\npush eax\npush " + fields[3] + "\ncall ReadChar\nadd esp, 4\npush sys_terminal_getch\ncall ReadChar\nadd esp, 4\npop eax");
     copyRoutines = true;
 }
 
 void translator::eval_C_OUTPUT(deque<string> fields) {
-    text_section.emplace_back(";C_OUTPUT\npush " + fields[3] + "\ncall PrintChar\nadd esp, 4");
+    text_section.emplace_back(";C_OUTPUT\npush eax\npush " + fields[3] + "\ncall PrintChar\nadd esp, 4\npop eax");
     copyRoutines = true;
 }
 
 void translator::eval_S_INPUT(deque<string> fields) {
-    text_section.emplace_back(";S_INPUT\npush " + fields[3] + "\ncall ReadString\nadd esp, 4");
+    text_section.emplace_back(";S_INPUT\npush eax\npush " + fields[3] + "\ncall ReadString\nadd esp, 4\npop eax");
     copyRoutines = true;
 }
 
 void translator::eval_S_OUTPUT(deque<string> fields) {
-    text_section.emplace_back(";S_OUTPUT\npush " + fields[3] + "\ncall PrintString\nadd esp, 4");
+    text_section.emplace_back(";S_OUTPUT\npush eax\npush " + fields[3] + "\ncall PrintString\nadd esp, 4\npop eax");
     copyRoutines = true;
 }
 
@@ -210,14 +210,16 @@ void translator::eval_SECTION(deque<string> fields) {
         text_section.emplace_back("_start:");
     }
     else if(fields[3] == "data"){
-        data_section.emplace_front("nwl dd 0xd, 0xa");
+        data_section.emplace_front("nwln dd 0xd, 0xa");
         data_section.emplace_front("ovfl_msg dd 'O','v','e','r','f','l','o','w',' ',"
                                    " 'd', 'e','t','e','c','t','e','d','.',' ','E','x',"
                                    "'i','t','i','n','g','.','.','.',0");
         data_section.push_front(code);
     }
-    else if(fields[3] == "bss")
+    else if(fields[3] == "bss") {
+        bss_section.emplace_front("sys_terminal_getch resb 1");
         bss_section.emplace_front("\n" + code);
+    }
     else
         error("Unknown section .%s directive\n", fields[3].c_str());
 }
