@@ -9,7 +9,7 @@ STOP
 ;comentario qualuer
 ;mais um comentario
 SECTION DATA
-N2: CONST 5
+N2: CONST -155
 SECTION BSS
 N1: SPACE
 N3: SPACE 2

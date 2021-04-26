@@ -19,6 +19,7 @@ This project is the second assignment of Basic Software discipline (2018/2) at U
 cmake CMakeLists.txt
 make
 ```
+* If Makefile is already present, you are able to skip the first command.
 ### 4. Usage and options available
 ```
 ./tradutor (optional flags) myfile1 myfile2 ... myfileN
